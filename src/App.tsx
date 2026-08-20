@@ -237,7 +237,7 @@ export default function App() {
         const assistantMessage: ChatMessageType = {
           id: `msg-assistant-${Date.now()}`,
           role: 'assistant',
-          content: data.text || 'Uttar prapt hua.',
+          content: data.response || 'Uttar prapt hua.',
           timestamp: Date.now(),
           isEmergencyAlert: data.isEmergency,
           suggestedFollowUps: data.suggestedFollowUps || [],
