@@ -1,0 +1,6 @@
+{
+  "name": "Sehat Sathi AI – Worldmedicare",
+  "description": "AI-powered health assistance, report explanations, and creator health content generator for Worldmedicare audience in Hindi, Hinglish, and English.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
