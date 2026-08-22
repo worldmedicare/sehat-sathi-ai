@@ -1,87 +1,87 @@
+import { GoogleGenAI } from "@google/genai";
+
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({
+      error: "Method not allowed",
+    });
   }
 
   try {
     const { messages } = req.body || {};
 
     if (!Array.isArray(messages) || messages.length === 0) {
-      return res.status(400).json({ error: "Messages are required" });
+      return res.status(400).json({
+        error: "Messages are required",
+      });
     }
 
     const apiKey = process.env.GEMINI_API_KEY?.trim();
 
     if (!apiKey) {
       return res.status(500).json({
-        error: "GEMINI_API_KEY is missing in Vercel Production environment",
+        error: "GEMINI_API_KEY is missing in Vercel",
       });
     }
 
-    const conversation = messages
-      .map((m: any) => {
-        const role = m?.role || "user";
-        const content =
-          typeof m?.content === "string"
-            ? m.content
-            : JSON.stringify(m?.content ?? "");
+    const ai = new GoogleGenAI({
+      apiKey,
+    });
 
-        return `${role}: ${content}`;
+    const contents = messages
+      .map((message: any) => {
+        const role =
+          message?.role === "assistant" || message?.role === "model"
+            ? "model"
+            : "user";
+
+        const text =
+          typeof message?.content === "string"
+            ? message.content
+            : JSON.stringify(message?.content ?? "");
+
+        return {
+          role,
+          parts: [{ text }],
+        };
       })
-      .join("\n");
+      .filter((message: any) => message.parts[0].text.trim());
 
-    const response = await fetch(
-      "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent",
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          "x-goog-api-key": apiKey,
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: conversation,
-                },
-              ],
-            },
-          ],
-          systemInstruction: {
-            parts: [
-              {
-                text:
-                  "You are Sehat Sathi AI, a friendly Indian healthcare education assistant. Give clear, simple and safe health information in Hindi, Hinglish or English according to the user's language. Do not claim to be a doctor. Do not provide unsafe prescription changes or guaranteed diagnoses. For emergencies, advise appropriate medical care.",
-              },
-            ],
-          },
-        }),
-      }
-    );
-
-    const data = await response.json();
-
-    if (!response.ok) {
-      console.error("Gemini API error:", data);
-
-      return res.status(500).json({
-        error: "Gemini API request failed",
-        details:
-          data?.error?.message ||
-          data?.error?.status ||
-          "Unknown Gemini API error",
+    if (contents.length === 0) {
+      return res.status(400).json({
+        error: "No valid message content found",
       });
     }
 
-    const text =
-      data?.candidates?.[0]?.content?.parts
-        ?.map((part: any) => part?.text || "")
-        .join("")
-        .trim() || "";
+    const response = await ai.models.generateContent({
+      model: "gemini-3.7-flash",
+      contents,
+      config: {
+        systemInstruction: `
+You are Sehat Sathi AI, the official AI health education assistant of Worldmedicare.
+
+Your job:
+- Give clear, useful and practical health information.
+- Reply naturally in Hindi, Hinglish or English according to the user's language.
+- Keep answers easy to understand.
+- Be friendly, professional and concise.
+- If the user asks a medical question, explain possible causes, basic precautions and when to see a doctor.
+- Never claim to be a doctor.
+- Never give dangerous or guaranteed diagnoses.
+- Never tell users to stop, start or change prescription medicines without medical supervision.
+- For serious emergency symptoms, advise immediate emergency medical care.
+- Do not unnecessarily repeat disclaimers in every answer.
+- Answer the user's actual question directly.
+
+For casual messages like "hi", "hello", "hyy", respond naturally and warmly.
+        `,
+      },
+    });
+
+    const text = response.text?.trim();
 
     if (!text) {
-      return res.status(500).json({
+      return res.status(502).json({
         error: "Gemini returned an empty response",
       });
     }
@@ -90,11 +90,14 @@ export default async function handler(req: any, res: any) {
       response: text,
     });
   } catch (error: any) {
-    console.error("Chat API error:", error);
+    console.error("Sehat Sathi Gemini error:", error);
 
     return res.status(500).json({
       error: "AI response failed",
-      details: error?.message || "Unknown server error",
+      details:
+        error?.message ||
+        error?.error?.message ||
+        "Unknown Gemini error",
     });
   }
 }
