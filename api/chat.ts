@@ -22,7 +22,7 @@ error: "GEMINI_API_KEY is missing in Vercel",
 });
 }
 
-// संदेशों को Gemini के सही फॉर्मेट (model और user) में बदलें
+// संदेशों को Gemini के सही फॉर्मेट में बदलें
 const contents = messages
 .map((message: any) => {
 const role =
@@ -40,7 +40,7 @@ return {
 };
 
 })
-.filter((message: any) => message.parts[0].text.length > 0);
+.filter((message: any) => message.parts[0] && message.parts[0].text.length > 0);
 
 // Gemini की बातचीत हमेशा 'user' के संदेश से शुरू होनी चाहिए
 while (contents.length > 0 && contents[0].role === "model") {
@@ -55,7 +55,7 @@ error: "No valid user message found",
 
 // Google API को कॉल करें
 const googleResponse = await fetch(
-"[https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent](https://generativelanguage.googleapis.com/v1beta/models/gemini-3.7-flash:generateContent)",
+"[https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent](https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent)",
 {
 method: "POST",
 headers: {
@@ -101,10 +101,6 @@ CONVERSATION: 
 * Give detailed answers when the user asks for details.`
 }
 ]
-},
-generationConfig: {
-// यहाँ 'low' हटाकर सही कॉन्फ़िगरेशन सेट कर दिया है
-responseMimeType: "text/plain"
 }
 }),
 }
