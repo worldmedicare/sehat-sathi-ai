@@ -40,7 +40,7 @@ return {
 };
 
 })
-.filter((message: any) => message.parts[0] && message.parts[0].text.length > 0);
+.filter((message: any) => message.parts && message.parts[0] && message.parts[0].text.length > 0);
 
 // Gemini की बातचीत हमेशा 'user' के संदेश से शुरू होनी चाहिए
 while (contents.length > 0 && contents[0].role === "model") {
